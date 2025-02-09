@@ -5,16 +5,13 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"log"
-	"log/slog"
 	"net/http"
 
 	"github.com/drewstinnett/inspectareq"
 )
 
 func main() {
-	fmt.Printf(`Use %v to enable curl printing, and %v to enable httpie printing`, inspectareq.CurlEnv, inspectareq.HTTPieEnv)
 	reqBody := bytes.NewBufferString(`{"username": "alice", "password": "secret"}`)
 	req, err := http.NewRequest("POST", "https://pie.dev/anything", reqBody)
 	if err != nil {
@@ -32,8 +29,6 @@ func main() {
 }
 
 func processRequest(req *http.Request) error {
-	slog.Info("debbuging status", "enabled", inspectareq.Enabled())
-
 	if err := inspectareq.Print(req); err != nil {
 		log.Fatalf("error printing request: %v", err)
 	}
