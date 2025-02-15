@@ -4,16 +4,16 @@ Package main is the executable for the enable-env example
 package main
 
 import (
-	"bytes"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/drewstinnett/inspectareq"
 )
 
 func main() {
-	reqBody := bytes.NewBufferString(`{"username": "alice", "password": "secret"}`)
-	req, err := http.NewRequest("POST", "https://pie.dev/anything", reqBody)
+	req, err := http.NewRequest("POST", "https://pie.dev/anything", strings.NewReader(`{"username": "alice", "password": "secret"}`))
 	if err != nil {
 		log.Fatalf("Error creating request: %v", err)
 	}
@@ -30,7 +30,7 @@ func main() {
 
 func processRequest(req *http.Request) error {
 	if err := inspectareq.Print(req); err != nil {
-		log.Fatalf("error printing request: %v", err)
+		return fmt.Errorf("error printing request: %w", err)
 	}
 
 	return nil

@@ -33,3 +33,10 @@ func (h httpie) Print(req *http.Request) (string, error) {
 
 	return strings.Join(cmd, " ") + "\n", nil
 }
+
+// WithHTTPie enables the httpie debugger
+func WithHTTPie() Option {
+	return func(r *Runner) {
+		r.debuggers = append(r.debuggers, httpie{r: r})
+	}
+}

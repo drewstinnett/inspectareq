@@ -43,6 +43,7 @@ func New(opts ...Option) *Runner {
 		writer:        os.Stderr,
 		redact:        true,
 		redactWith:    "REDACTED",
+		enabled:       true,
 		redactHeaders: []string{"Authorization"},
 		mu:            &sync.RWMutex{},
 	}
@@ -59,6 +60,9 @@ type Option func(*Runner)
 // making decisions about how to format the output, and if to output at all
 func WithEnvironment() Option {
 	return func(r *Runner) {
+		// Assume off, if using the environment to configure
+		r.enabled = false
+
 		if os.Getenv(CurlEnv) != "" {
 			r.enabled = true
 			r.debuggers = append(r.debuggers, curl{r: r})

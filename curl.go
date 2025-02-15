@@ -35,3 +35,10 @@ func (c curl) Print(req *http.Request) (string, error) {
 
 	return strings.Join(cmd, " ") + "\n", nil
 }
+
+// WithCurl enables the curl debugger
+func WithCurl() Option {
+	return func(r *Runner) {
+		r.debuggers = append(r.debuggers, curl{r: r})
+	}
+}

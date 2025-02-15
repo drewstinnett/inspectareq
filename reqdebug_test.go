@@ -2,6 +2,7 @@ package inspectareq
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -85,34 +86,36 @@ func TestEnvs(t *testing.T) {
 func TestEnableDisable(t *testing.T) {
 	b := bytes.NewBufferString("")
 	d := New(WithWriter(b), WithDebugger(httpie{}))
-
 	req := mustNewRequest("GET", "http://www.example.com", nil, nil)
 
-	if err := d.Print(req); err != nil {
-		t.Fatalf("got unexpected error: %v", err)
-	}
-	if b.String() != "" {
-		t.Error("got a non empty string back from a fresh debugger: " + b.String())
-	}
-
-	// Enable printing
-	d.Enable()
+	// Should print by default since this isn't an environmental config
 	if err := d.Print(req); err != nil {
 		t.Fatalf("got unexpected error: %v", err)
 	}
 	expect := "http GET 'http://www.example.com'\n"
 	if b.String() != expect {
-		t.Errorf("\nexpected: %v\n but got: %v", expect, b.String())
+		t.Errorf("got incorrect string back: %q", b.String())
 	}
 
-	// Disable printing
+	// No printing when disabled
 	d.Disable()
-	b = bytes.NewBufferString("")
+	b.Reset()
 	if err := d.Print(req); err != nil {
 		t.Fatalf("got unexpected error: %v", err)
 	}
 	if b.String() != "" {
-		t.Error("got a non empty string back from a fresh debugger: " + b.String())
+		t.Errorf("expected empty string, but got: %q", b.String())
+	}
+
+	// Print again aafter enabling
+	d.Enable()
+	b.Reset()
+	fmt.Fprintf(os.Stderr, "ENABLED IS: %v\n", d.enabled)
+	if err := d.Print(req); err != nil {
+		t.Fatalf("got unexpected error: %v", err)
+	}
+	if b.String() != expect {
+		t.Errorf("got incorrect string back: %q", b.String())
 	}
 }
 
@@ -132,6 +135,42 @@ func TestHeaders(t *testing.T) {
 	}
 	if got[1][1] != "Value2" {
 		t.Errorf("expected value of: 'Value2', but got: %v", got[1][1])
+	}
+}
+
+func TestRedact(t *testing.T) {
+	for desc, tt := range map[string]struct {
+		options []Option
+		expect  string
+	}{
+		"redact-default": {
+			options: []Option{},
+			expect:  "http GET 'http://www.example.com' 'Authorization:REDACTED'\n",
+		},
+		"without-redact": {
+			options: []Option{WithoutRedact()},
+			expect:  "http GET 'http://www.example.com' 'Authorization:Bearer secret-value'\n",
+		},
+	} {
+		t.Run(desc, func(t *testing.T) {
+			os.Clearenv()
+			b := bytes.NewBufferString("")
+			options := []Option{WithWriter(b), WithHTTPie()}
+			options = append(options, tt.options...)
+			d := New(options...)
+			d.Enable()
+			req := mustNewRequest("GET", "http://www.example.com", nil, map[string][]string{
+				"Authorization": {"Bearer secret-value"},
+			})
+			if err := d.Print(req); err != nil {
+				t.Fatalf("got unexpected error: %v", err)
+			}
+
+			got := b.String()
+			if got != tt.expect {
+				t.Errorf("did not get expected redaction value:\n\n     got: %q\nexpected: %q", got, tt.expect)
+			}
+		})
 	}
 }
 

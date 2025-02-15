@@ -34,13 +34,16 @@ func TestCurl(t *testing.T) {
 `,
 		},
 	} {
-		got, err := curl{r: New()}.Print(tt.given)
-		if err != nil {
+		b := bytes.NewBufferString("")
+
+		d := New(WithCurl(), WithWriter(b))
+
+		if err := d.Print(tt.given); err != nil {
 			t.Fatalf("expected no error, but got: %v\n", err)
 		}
 
-		if got != tt.expect {
-			t.Errorf("%v:\nexpected: %v\n but got: %v\n", desc, tt.expect, got)
+		if b.String() != tt.expect {
+			t.Errorf("%v:\nexpected: %q\n but got: %q\n", desc, tt.expect, b.String())
 		}
 	}
 }

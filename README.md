@@ -10,11 +10,18 @@ wanna run curl or httpie to try to recreate whatever your app is doing? Just do
 ## Usage
 
 ```bash
+## No environment variables set, so print nothing
 ❯ go run ./examples/enable-env/
+
+## Print out requests in the curl format
 ❯ DEBUG_CURL=1 go run ./examples/enable-env/
 curl -X POST -H 'Authorization: REDACTED' -H 'Content-Type: application/json' -H 'X-Debug: true' 'https://pie.dev/anything' -d '{"username": "alice", "password": "secret"}'
+
+## Print out requests in the httpie format
 ❯ DEBUG_HTTPIE=1 go run ./examples/enable-env/
 http POST 'https://pie.dev/anything' 'Authorization:REDACTED' 'Content-Type:application/json' 'X-Debug:true' data='{"username": "alice", "password": "secret"}'
+
+## Print out requests in both curl and httpie formats
 ❯ DEBUG_CURL=1 DEBUG_HTTPIE=1 go run ./examples/enable-env/
 curl -X POST -H 'Authorization: REDACTED' -H 'Content-Type: application/json' -H 'X-Debug: true' 'https://pie.dev/anything' -d '{"username": "alice", "password": "secret"}'
 http POST 'https://pie.dev/anything' 'Authorization:REDACTED' 'Content-Type:application/json' 'X-Debug:true' data='{"username": "alice", "password": "secret"}'
