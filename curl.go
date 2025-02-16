@@ -9,10 +9,10 @@ type curl struct {
 	r *Runner
 }
 
-// CurlEnv is the environment variable key to enable debugging with curl
+// CurlEnv is the environment variable key to enable debugging with curl.
 const CurlEnv string = "DEBUG_CURL"
 
-// curl returns a curl compatible command string
+// curl returns a curl compatible command string.
 func (c curl) Print(req *http.Request) (string, error) {
 	cmd := []string{
 		"curl",
@@ -36,7 +36,7 @@ func (c curl) Print(req *http.Request) (string, error) {
 	return strings.Join(cmd, " ") + "\n", nil
 }
 
-// WithCurl enables the curl debugger
+// WithCurl enables the curl debugger.
 func WithCurl() Option {
 	return func(r *Runner) {
 		r.debuggers = append(r.debuggers, curl{r: r})

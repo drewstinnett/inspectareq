@@ -6,14 +6,14 @@ import (
 	"strings"
 )
 
-// HTTPieEnv is the environment variable to enable httpie debugging
+// HTTPieEnv is the environment variable to enable httpie debugging.
 const HTTPieEnv string = "DEBUG_HTTPIE"
 
 type httpie struct {
 	r *Runner
 }
 
-// httpie returns an httpie compatible command string
+// httpie returns an httpie compatible command string.
 func (h httpie) Print(req *http.Request) (string, error) {
 	cmd := []string{
 		"http",
@@ -34,7 +34,7 @@ func (h httpie) Print(req *http.Request) (string, error) {
 	return strings.Join(cmd, " ") + "\n", nil
 }
 
-// WithHTTPie enables the httpie debugger
+// WithHTTPie enables the httpie debugger.
 func WithHTTPie() Option {
 	return func(r *Runner) {
 		r.debuggers = append(r.debuggers, httpie{r: r})

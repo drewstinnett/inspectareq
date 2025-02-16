@@ -15,7 +15,7 @@ import (
 	"sync"
 )
 
-// Runner is the container struct for things printin' out strings
+// Runner is the container struct for things printin' out strings.
 type Runner struct {
 	enabled       bool
 	writer        io.Writer
@@ -26,18 +26,18 @@ type Runner struct {
 	mu            *sync.RWMutex
 }
 
-// Debugger is an interface that defines how a debugger behaves
+// Debugger is an interface that defines how a debugger behaves.
 type Debugger interface {
 	Print(*http.Request) (string, error)
 }
 
-// DebuggerList is a list of fmt.Stringer objects that print out the debug command to a string
+// DebuggerList is a list of fmt.Stringer objects that print out the debug command to a string.
 type DebuggerList []Debugger
 
-// NoRedactEnv is the environment variable to disable redactions
+// NoRedactEnv is the environment variable to disable redactions.
 const NoRedactEnv string = "NO_REDACT"
 
-// New returns a new Debugger using functional options
+// New returns a new Debugger using functional options.
 func New(opts ...Option) *Runner {
 	d := &Runner{
 		writer:        os.Stderr,
@@ -53,11 +53,11 @@ func New(opts ...Option) *Runner {
 	return d
 }
 
-// Option is a functional option to the Debugger object
+// Option is a functional option to the Debugger object.
 type Option func(*Runner)
 
 // WithEnvironment allows the Debugger to look at environment variables when
-// making decisions about how to format the output, and if to output at all
+// making decisions about how to format the output, and if to output at all.
 func WithEnvironment() Option {
 	return func(r *Runner) {
 		// Assume off, if using the environment to configure
@@ -77,60 +77,60 @@ func WithEnvironment() Option {
 	}
 }
 
-// WithoutRedact turns redaction off
+// WithoutRedact turns redaction off.
 func WithoutRedact() Option {
 	return func(r *Runner) {
 		r.redact = false
 	}
 }
 
-// WithDebugger enables the httpie debugger
+// WithDebugger enables the httpie debugger.
 func WithDebugger(d Debugger) Option {
 	return func(r *Runner) {
 		r.debuggers = append(r.debuggers, d)
 	}
 }
 
-// WithWriter sets the writer for the Debugger client
+// WithWriter sets the writer for the Debugger client.
 func WithWriter(w io.Writer) Option {
 	return func(r *Runner) {
 		r.writer = w
 	}
 }
 
-// Enable enables the default debug printer
+// Enable enables the default debug printer.
 func Enable() { defaultR.Enable() }
 
-// Enable enables the debug printer
+// Enable enables the debug printer.
 func (r *Runner) Enable() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.enabled = true
 }
 
-// Disable diables the default debug printer
+// Disable diables the default debug printer.
 func Disable() { defaultR.Disable() }
 
-// Disable disables the debug printer
+// Disable disables the debug printer.
 func (r *Runner) Disable() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.enabled = false
 }
 
-// Enabled returns the state of the default Debugger
+// Enabled returns the state of the default Debugger.
 func Enabled() bool { return defaultR.Enabled() }
 
-// Enabled returns the enabled state
-func (r Runner) Enabled() bool {
+// Enabled returns the enabled state.
+func (r *Runner) Enabled() bool {
 	return r.enabled
 }
 
-// Print prints using the default Debugger
+// Print prints using the default Debugger.
 func Print(req *http.Request) error { return defaultR.Print(req) }
 
-// Print will print the req statement out to the writer, if enabled
-func (r Runner) Print(req *http.Request) error {
+// Print will print the req statement out to the writer, if enabled.
+func (r *Runner) Print(req *http.Request) error {
 	if !r.enabled {
 		return nil
 	}
@@ -139,7 +139,7 @@ func (r Runner) Print(req *http.Request) error {
 		if err != nil {
 			return err
 		}
-		if _, err := fmt.Fprint(r.writer, got); err != nil {
+		if _, err = fmt.Fprint(r.writer, got); err != nil {
 			return err
 		}
 	}
@@ -168,7 +168,7 @@ func bashEscape(input string) string {
 
 // readBody reads an io.ReadCloser and immediately puts the original data back
 // in place, so it can be used again later. A copy of the body is returned as a
-// string
+// string.
 func readBody(b *io.ReadCloser) (string, error) {
 	// https://blog.flexicondev.com/read-go-http-request-body-multiple-times#heading-the-simplest-solution
 	body, err := io.ReadAll(*b)
@@ -180,24 +180,24 @@ func readBody(b *io.ReadCloser) (string, error) {
 	return string(body), nil
 }
 
-// defaultR is the default Runner, created at init() using WithEnvironment()
-var defaultR *Runner
+// defaultR is the default Runner, created at init() using WithEnvironment().
+var defaultR *Runner //nolint:gochecknoglobals // a global runner is what we want in this pacakge
 
-func init() {
+func init() { //nolint:gochecknoinits // we expect a global default to easily use environment variable based printing
 	defaultR = New(WithEnvironment())
 }
 
-// Get returns the default debugger
+// Get returns the default debugger.
 func Get() *Runner {
 	return defaultR
 }
 
-// Set sets the given Debugger to the default
+// Set sets the given Debugger to the default.
 func Set(v *Runner) {
 	defaultR = v
 }
 
-// headers returns the keys and values from an http.Header as a slice
+// headers returns the keys and values from an http.Header as a slice.
 func (r *Runner) headers(h http.Header) [][2]string {
 	ret := [][2]string{}
 	for _, k := range headerKeys(h) {
@@ -214,7 +214,7 @@ func (r *Runner) headers(h http.Header) [][2]string {
 	return ret
 }
 
-// redact Headers replaces sensitive header values with the string in Runner.redactWith
+// redact Headers replaces sensitive header values with the string in Runner.redactWith.
 func (r *Runner) redactHeader(k, v string) string {
 	if !r.redact {
 		return v

@@ -2,7 +2,6 @@ package inspectareq
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -27,27 +26,27 @@ func TestBodyRead(t *testing.T) {
 
 func TestEnvs(t *testing.T) {
 	for desc, tt := range map[string]struct {
-		envs   map[string]string
-		given  *http.Request
-		expect string
+		envs  map[string]string
+		given *http.Request
+		want  string
 	}{
 		"httpie": {
-			envs:   map[string]string{HTTPieEnv: "1"},
-			given:  mustNewRequest("GET", "http://www.example.com", nil, nil),
-			expect: "http GET 'http://www.example.com'\n",
+			envs:  map[string]string{HTTPieEnv: "1"},
+			given: mustNewRequest("GET", "http://www.example.com", nil, nil),
+			want:  "http GET 'http://www.example.com'\n",
 		},
 		"curl": {
-			envs:   map[string]string{CurlEnv: "1"},
-			given:  mustNewRequest("GET", "http://www.example.com", nil, nil),
-			expect: "curl -X GET 'http://www.example.com'\n",
+			envs:  map[string]string{CurlEnv: "1"},
+			given: mustNewRequest("GET", "http://www.example.com", nil, nil),
+			want:  "curl -X GET 'http://www.example.com'\n",
 		},
 		"httpie-and-curl": {
 			envs: map[string]string{
 				HTTPieEnv: "1",
 				CurlEnv:   "1",
 			},
-			given:  mustNewRequest("GET", "http://www.example.com", nil, nil),
-			expect: "curl -X GET 'http://www.example.com'\nhttp GET 'http://www.example.com'\n",
+			given: mustNewRequest("GET", "http://www.example.com", nil, nil),
+			want:  "curl -X GET 'http://www.example.com'\nhttp GET 'http://www.example.com'\n",
 		},
 	} {
 		os.Clearenv()
@@ -64,21 +63,20 @@ func TestEnvs(t *testing.T) {
 			t.Fatalf("got unexpected error: %v", err)
 		}
 
-		if b.String() != tt.expect {
-			t.Errorf("%v:\nexpected: %v\n but got: %v\n", desc, tt.expect, b.String())
+		if got := b.String(); got != tt.want {
+			t.Errorf("%v:\nexpected: %q\n but got: %q\n", desc, tt.want, got)
 		}
 
 		// Test the default debugger
 		b = bytes.NewBufferString("")
 		c = Get()
 		c.writer = b
-		// c.Enable() // The envs are reset so just enable it here
 		if err := c.Print(tt.given); err != nil {
-			t.Fatalf("\n%v:\ngot unexpected error: %v", desc, err)
+			t.Fatalf("\n%q:\ngot unexpected error: %q", desc, err)
 		}
 
-		if b.String() != tt.expect {
-			t.Errorf("\n%v:\nexpected: %v\n but got: %v\n", desc, tt.expect, b.String())
+		if got := b.String(); got != tt.want {
+			t.Errorf("\n%q:\nexpected: %q\n but got: %v\n", desc, tt.want, got)
 		}
 	}
 }
@@ -92,8 +90,10 @@ func TestEnableDisable(t *testing.T) {
 	if err := d.Print(req); err != nil {
 		t.Fatalf("got unexpected error: %v", err)
 	}
+
 	expect := "http GET 'http://www.example.com'\n"
-	if b.String() != expect {
+
+	if got, want := b.String(), expect; got != want {
 		t.Errorf("got incorrect string back: %q", b.String())
 	}
 
@@ -103,19 +103,18 @@ func TestEnableDisable(t *testing.T) {
 	if err := d.Print(req); err != nil {
 		t.Fatalf("got unexpected error: %v", err)
 	}
-	if b.String() != "" {
-		t.Errorf("expected empty string, but got: %q", b.String())
+	if got := b.String(); got != "" {
+		t.Errorf("expected empty string, but got: %q", got)
 	}
 
 	// Print again aafter enabling
 	d.Enable()
 	b.Reset()
-	fmt.Fprintf(os.Stderr, "ENABLED IS: %v\n", d.enabled)
 	if err := d.Print(req); err != nil {
 		t.Fatalf("got unexpected error: %v", err)
 	}
-	if b.String() != expect {
-		t.Errorf("got incorrect string back: %q", b.String())
+	if got := b.String(); got != expect {
+		t.Errorf("got incorrect string back: %q", got)
 	}
 }
 
@@ -141,40 +140,34 @@ func TestHeaders(t *testing.T) {
 func TestRedact(t *testing.T) {
 	for desc, tt := range map[string]struct {
 		options []Option
-		expect  string
+		want    string
 	}{
 		"redact-default": {
 			options: []Option{},
-			expect:  "http GET 'http://www.example.com' 'Authorization:REDACTED'\n",
+			want:    "http GET 'http://www.example.com' 'Authorization:REDACTED'\n",
 		},
 		"without-redact": {
 			options: []Option{WithoutRedact()},
-			expect:  "http GET 'http://www.example.com' 'Authorization:Bearer secret-value'\n",
+			want:    "http GET 'http://www.example.com' 'Authorization:Bearer secret-value'\n",
 		},
 	} {
 		t.Run(desc, func(t *testing.T) {
-			os.Clearenv()
 			b := bytes.NewBufferString("")
 			options := []Option{WithWriter(b), WithHTTPie()}
 			options = append(options, tt.options...)
 			d := New(options...)
-			d.Enable()
-			req := mustNewRequest("GET", "http://www.example.com", nil, map[string][]string{
-				"Authorization": {"Bearer secret-value"},
-			})
-			if err := d.Print(req); err != nil {
+			if err := d.Print(mustNewRequest("GET", "http://www.example.com", nil, map[string][]string{"Authorization": {"Bearer secret-value"}})); err != nil {
 				t.Fatalf("got unexpected error: %v", err)
 			}
 
-			got := b.String()
-			if got != tt.expect {
-				t.Errorf("did not get expected redaction value:\n\n     got: %q\nexpected: %q", got, tt.expect)
+			if got, want := b.String(), tt.want; got != want {
+				t.Errorf("did not get expected redaction value:\n\n     got: %q\nexpected: %q", got, tt.want)
 			}
 		})
 	}
 }
 
-// Panic if given an invalid request. Really try hard not do that here in the tests
+// Panic if given an invalid request. Really try hard not do that here in the tests.
 func mustNewRequest(method string, url string, body io.Reader, headers map[string][]string) *http.Request {
 	req, err := http.NewRequest(method, url, body)
 	for k, v := range headers {

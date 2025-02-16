@@ -39,7 +39,7 @@ func TestHTTPie(t *testing.T) {
 		}
 
 		if got != tt.expect {
-			t.Errorf("%v:\nexpected: %v\n but got: %v\n", desc, tt.expect, got)
+			t.Errorf("%v:\nexpected: %q\n but got: %q\n", desc, tt.expect, got)
 		}
 	}
 }
