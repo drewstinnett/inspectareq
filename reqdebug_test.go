@@ -2,6 +2,7 @@ package inspectareq
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -179,4 +180,11 @@ func mustNewRequest(method string, url string, body io.Reader, headers map[strin
 		panic(err)
 	}
 	return req
+}
+
+// badBody is an io.Reader that always returns an error.
+type badBody struct{}
+
+func (badBody) Read(_ []byte) (int, error) {
+	return 0, errors.New("error reading")
 }

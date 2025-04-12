@@ -47,3 +47,9 @@ func TestCurl(t *testing.T) {
 		}
 	}
 }
+
+func TestCurlErr(t *testing.T) {
+	if err, want := New(WithCurl()).Print(mustNewRequest("POST", "http://www.example.com", badBody{}, nil)), "error reading"; err.Error() != want {
+		t.Errorf("expected error: %q, but got %q", want, err)
+	}
+}

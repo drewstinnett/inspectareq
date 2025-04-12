@@ -43,3 +43,9 @@ func TestHTTPie(t *testing.T) {
 		}
 	}
 }
+
+func TestHTTPieErr(t *testing.T) {
+	if err, want := New(WithHTTPie()).Print(mustNewRequest("POST", "http://www.example.com", badBody{}, nil)), "error reading"; err.Error() != want {
+		t.Errorf("expected error: %q, but got %q", want, err)
+	}
+}
